@@ -419,6 +419,34 @@
         }
 
         /**
+         * Slides a slider to the given direction,
+         * Goes to next section if we reach the left end of the slides
+         */
+        /*
+        function moveSlideUntilLastThenMoveSection(direction, section){
+            var activeSection = section == null ? $(SECTION_ACTIVE_SEL)[0] : section;
+            var slides = $(SLIDES_WRAPPER_SEL, activeSection)[0];
+
+            // nothing should be already sliding
+            if (slideMoving) {
+                return;
+            }
+
+            var currentSlide = $(SLIDE_ACTIVE_SEL, slides)[0];
+            var destiny = null;
+
+
+            destiny = prevUntil(currentSlide, SLIDE_SEL);
+            if(destiny == null){
+               destiny = moveSectionDown();
+            }
+
+            slideMoving = true && !FP.test.isTesting;
+            landscapeScroll(slides, destiny, direction);
+        } 
+        */
+
+        /**
         * Moves the page up one section.
         */
         function moveSectionUp(){
@@ -452,6 +480,28 @@
         }
 
         /**
+         * Moves page down one section, but
+         * slides all avaliable sections first
+         * slides down to the first slide of the next section
+         */
+        function moveSectionDownHorizontally(){
+            if (!moveSlideRight()){
+                moveSectionDown();
+            }
+        }
+
+        /**
+         * Moves page up one section, but
+         * slides all avaliable sections first
+         * slides up to the first slide of the next section
+         */
+        function moveSectionUpHorizontally(section){
+            if (!moveSlideLeft(section)){
+                moveSectionUp();
+            }
+        }
+
+        /**
         * Moves the page to the given section and slide with no animation.
         * Anchors or index positions can be used as params.
         */
@@ -480,7 +530,7 @@
         * Optional `section` param.
         */
         function moveSlideRight(section){
-            moveSlide('right', section);
+            moveSlideUntil('right', section);
         }
 
         /**
@@ -488,8 +538,8 @@
         * Optional `section` param.
         */
         function moveSlideLeft(section){
-            // moveSlide('left', section);
-            moveSlideLeftUntilLastThenMoveSection(section);
+             moveSlideUntil('left', section);
+            
         }
 
         /**
@@ -1379,7 +1429,8 @@
                 return;
             }
 
-            var scrollSection = (type === 'down') ? moveSectionDown : moveSectionUp;
+            //var scrollSection = (type === 'down') ? moveSectionDown : moveSectionUp;
+            var scrollSection = (type === 'down') ? moveSectionDownHorizontally : moveSectionUpHorizontally;
 
             if(options.scrollOverflow){
                 var scrollable = options.scrollOverflowHandler.scrollable($(SECTION_ACTIVE_SEL)[0]);
@@ -1445,11 +1496,11 @@
                     if (!slideMoving && Math.abs(touchStartX - touchEndX) > (getWindowWidth() / 100 * options.touchSensitivity)) {
                         if (touchStartX > touchEndX) {
                             if(isScrollAllowed.m.right){
-                                moveSlideRight(activeSection); //next
+                              //  moveSlideRight(activeSection); //next
                             }
                         } else {
                             if(isScrollAllowed.m.left){
-                                moveSlideLeft(activeSection); //prev
+                              //  moveSlideLeft(activeSection); //prev
                             }
                         }
                     }
@@ -1591,38 +1642,58 @@
             }
         }
 
-         /**
-         * Slides a slider to the given direction,
-         * Goes to next section if we reach the left end of the slides
-         */
-        function moveSlideLeftUntilLastThenMoveSection(section){
-            var direction="left";
-            var activeSection = section == null ? $(SECTION_ACTIVE_SEL)[0] : section;
-            var slides = $(SLIDES_WRAPPER_SEL, activeSection)[0];
 
-            // nothing should be already sliding
-            if (slideMoving) {
-                return;
-            }
+        /**
+        * Slides a slider to the given direction.
+        * @return true if slide succesfully slided or is currently sliding
+        *          false if slide couldn't slide 
+        */
+       function moveSlideUntil(direction, section){
+        var activeSection = section == null ? $(SECTION_ACTIVE_SEL)[0] : section;
+        var slides = $(SLIDES_WRAPPER_SEL, activeSection)[0];
 
-            var currentSlide = $(SLIDE_ACTIVE_SEL, slides)[0];
-            var destiny = null;
+        // only one slide means we cannot slide 
+        if (slides == null || $(SLIDE_SEL, slides).length < 2) {
+            return false;
+        }
+        // is slide already sliding?
+        else if (slideMoving) return true;
 
 
+        var currentSlide = $(SLIDE_ACTIVE_SEL, slides)[0];
+        var destiny = null;
+
+        if(direction === 'left'){
             destiny = prevUntil(currentSlide, SLIDE_SEL);
-            if(destiny == null){
-               destiny = moveSectionDown();
+        }else{
+            destiny = nextUntil(currentSlide, SLIDE_SEL);
+        }
+
+        //isn't there a next slide in the sequence?
+        if(destiny == null){
+            //respect loopHorizontal setting
+            // loop horizontal must be set to false fofr horiontal scrolling to work
+            if (!options.loopHorizontal) return false;
+
+            var slideSiblings = siblings(currentSlide);
+            if(direction === 'left'){
+                destiny = slideSiblings[slideSiblings.length - 1]; //last
+            }else{
+                destiny = slideSiblings[0]; //first
             }
+        }
 
-            slideMoving = true && !FP.test.isTesting;
-            landscapeScroll(slides, destiny, direction);
-
-        } 
+        slideMoving = true && !FP.test.isTesting;
+        landscapeScroll(slides, destiny, direction);
+        return true;
+    }
+      
         
         /**
         * Slides a slider to the given direction.
         * Optional `section` param.
         */
+       /*
         function moveSlide(direction, section){
             var activeSection = section == null ? $(SECTION_ACTIVE_SEL)[0] : section;
             var slides = $(SLIDES_WRAPPER_SEL, activeSection)[0];
@@ -1641,7 +1712,7 @@
                 destiny = nextUntil(currentSlide, SLIDE_SEL);
             }
 
-            //isn't there a next slide in the secuence?
+            //isn't there a next slide in the sequence?
             if(destiny == null){
                 //respect loopHorizontal settin
                 if (!options.loopHorizontal) return;
@@ -1657,6 +1728,7 @@
             slideMoving = true && !FP.test.isTesting;
             landscapeScroll(slides, destiny, direction);
         }
+        */
 
         /**
         * Maintains the active slides in the viewport
@@ -2414,11 +2486,11 @@
             /*jshint validthis:true */
             if (hasClass(this, SLIDES_PREV)) {
                 if(isScrollAllowed.m.left){
-                    moveSlideLeft(section);
+                    //moveSlideLeft(section);
                 }
             } else {
                 if(isScrollAllowed.m.right){
-                    moveSlideRight(section);
+                   // moveSlideRight(section);
                 }
             }
         }
@@ -2481,7 +2553,8 @@
                 case 38:
                 case 33:
                     if(isScrollAllowed.k.up){
-                        moveSectionUp();
+                       // moveSectionUp();
+                       moveSectionUpHorizontally();
                     }
                     break;
 
@@ -2489,7 +2562,8 @@
                 case 32: //spacebar
 
                     if(shiftPressed && isScrollAllowed.k.up && !isMediaFocused){
-                        moveSectionUp();
+                        //moveSectionUp();
+                        moveSectionUpHorizontally();
                         break;
                     }
                 /* falls through */
@@ -2498,7 +2572,8 @@
                     if(isScrollAllowed.k.down){
                         // space bar?
                         if(e.keyCode !== 32 || !isMediaFocused){
-                            moveSectionDown();
+                           // moveSectionDown();
+                           moveSectionDownHorizontally();
                         }
                     }
                     break;
@@ -2520,14 +2595,14 @@
                 //left
                 case 37:
                     if(isScrollAllowed.k.left){
-                        moveSlideLeft();
+                       // moveSlideLeft();
                     }
                     break;
 
                 //right
                 case 39:
                     if(isScrollAllowed.k.right){
-                        moveSlideRight();
+                       // moveSlideRight();
                     }
                     break;
 
@@ -2548,12 +2623,14 @@
             if(canScroll){
                 // moving up
                 if (e.pageY < oldPageY && isScrollAllowed.m.up){
-                    moveSectionUp();
+                    //moveSectionUp();
+                    moveSectionUpHorizontally();
                 }
 
                 // moving down
                 else if(e.pageY > oldPageY && isScrollAllowed.m.down){
-                    moveSectionDown();
+                    //moveSectionDown();
+                    moveSectionDownHorizontally();
                 }
             }
             oldPageY = e.pageY;
