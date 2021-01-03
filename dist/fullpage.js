@@ -418,33 +418,6 @@
             }
         }
 
-        /**
-         * Slides a slider to the given direction,
-         * Goes to next section if we reach the left end of the slides
-         */
-        /*
-        function moveSlideUntilLastThenMoveSection(direction, section){
-            var activeSection = section == null ? $(SECTION_ACTIVE_SEL)[0] : section;
-            var slides = $(SLIDES_WRAPPER_SEL, activeSection)[0];
-
-            // nothing should be already sliding
-            if (slideMoving) {
-                return;
-            }
-
-            var currentSlide = $(SLIDE_ACTIVE_SEL, slides)[0];
-            var destiny = null;
-
-
-            destiny = prevUntil(currentSlide, SLIDE_SEL);
-            if(destiny == null){
-               destiny = moveSectionDown();
-            }
-
-            slideMoving = true && !FP.test.isTesting;
-            landscapeScroll(slides, destiny, direction);
-        } 
-        */
 
         /**
         * Moves the page up one section.
@@ -480,11 +453,38 @@
         }
 
         /**
+         * Wrapper for the action of scrolling to the next section
+         * if scrollHorizontally option is activated slides to the avaliable slides before scrolling to next section
+         * if not scrolls to section
+         */
+        function moveDown(){
+            if (!options.scrollHorizontally){
+                moveSectionDown();
+            }
+            else {
+                moveDownHorizontally();
+            }
+        }
+
+        /**
+         * Wrapper for the action of scrolling to the previous section
+         * if scrollHorizontally option is activated slides to the avaliable slides before scrolling to previous section
+         * if not scrolls to section
+         */
+        function moveUp(){
+            if (!options.scrollHorizontally){
+                moveSectionUp();
+            }
+            else {
+                moveUpHorizontally();
+            }
+        }
+
+        /**
          * Moves page down one section, but
          * slides all avaliable sections first
-         * slides down to the first slide of the next section
          */
-        function moveSectionDownHorizontally(){
+        function moveDownHorizontally(){
             if (moveSlideRight() == false){
                 moveSectionDown();
             }
@@ -493,9 +493,8 @@
         /**
          * Moves page up one section, but
          * slides all avaliable sections first
-         * slides up to the first slide of the next section
          */
-        function moveSectionUpHorizontally(){
+        function moveUpHorizontally(){
             if (moveSlideLeft() == false){
                 moveSectionUp();
             }
@@ -530,7 +529,7 @@
         * Optional `section` param.
         */
         function moveSlideRight(section){
-            return moveSlideUntil('right', section);
+            return moveSlide('right', section);
         }
 
         /**
@@ -538,8 +537,7 @@
         * Optional `section` param.
         */
         function moveSlideLeft(section){
-            return moveSlideUntil('left', section);
-            
+            return moveSlide('left', section);
         }
 
         /**
@@ -788,7 +786,7 @@
             else if(matches(target, SECTION_NAV_TOOLTIP_SEL)){
                 tooltipTextHandler.call(target);
             }
-            else if(matches(target, SLIDES_ARROW_SEL)){
+            else if(matches(target, SLIDES_ARROW_SEL) && !options.scrollHorizontally){
                 slideArrowHandler.call(target, e);
             }
             else if(matches(target, SLIDES_NAV_LINK_SEL) || closest(target, SLIDES_NAV_LINK_SEL) != null){
@@ -1006,7 +1004,7 @@
             css($(SLIDES_CONTAINER_SEL, section), {'width': sliderWidth + '%'});
 
             if(numSlides > 1){
-                if(options.controlArrows){
+                if(options.controlArrows && !options.scrollHorizontally){
                     createSlideArrows(section);
                 }
 
@@ -1429,8 +1427,7 @@
                 return;
             }
 
-            //var scrollSection = (type === 'down') ? moveSectionDown : moveSectionUp;
-            var scrollSection = (type === 'down') ? moveSectionDownHorizontally : moveSectionUpHorizontally;
+            var scrollSection = (type === 'down') ? moveDown : moveUp;
 
             if(options.scrollOverflow){
                 var scrollable = options.scrollOverflowHandler.scrollable($(SECTION_ACTIVE_SEL)[0]);
@@ -1495,12 +1492,12 @@
                     //is the movement greater than the minimum resistance to scroll?
                     if (!slideMoving && Math.abs(touchStartX - touchEndX) > (getWindowWidth() / 100 * options.touchSensitivity)) {
                         if (touchStartX > touchEndX) {
-                            if(isScrollAllowed.m.right){
-                              //  moveSlideRight(activeSection); //next
+                            if(isScrollAllowed.m.right &&!options.scrollHorizontally){
+                              moveSlideRight(activeSection); //next
                             }
                         } else {
-                            if(isScrollAllowed.m.left){
-                              //  moveSlideLeft(activeSection); //prev
+                            if(isScrollAllowed.m.left && !options.scrollHorizontally){
+                              moveSlideLeft(activeSection); //prev
                             }
                         }
                     }
@@ -1648,7 +1645,7 @@
         * @return true if slide succesfully slided or is currently sliding
         *          false if slide couldn't slide 
         */
-       function moveSlideUntil(direction, section){
+       function moveSlide(direction, section){
         var activeSection = section == null ? $(SECTION_ACTIVE_SEL)[0] : section;
         var slides = $(SLIDES_WRAPPER_SEL, activeSection)[0];
 
@@ -1671,9 +1668,10 @@
 
         //isn't there a next slide in the sequence?
         if(destiny == null){
+
             //respect loopHorizontal setting
-            // loop horizontal must be set to false fofr horiontal scrolling to work
-            if (!options.loopHorizontal) return false;
+            // loop horizontal must be set to false for horiontal scrolling to work
+            if (options.scrollHorizontally || !options.loopHorizontal) return false;
 
             var slideSiblings = siblings(currentSlide);
             if(direction === 'left'){
@@ -1688,47 +1686,6 @@
         return true;
     }
       
-        
-        /**
-        * Slides a slider to the given direction.
-        * Optional `section` param.
-        */
-       /*
-        function moveSlide(direction, section){
-            var activeSection = section == null ? $(SECTION_ACTIVE_SEL)[0] : section;
-            var slides = $(SLIDES_WRAPPER_SEL, activeSection)[0];
-
-            // more than one slide needed and nothing should be sliding
-            if (slides == null || slideMoving || $(SLIDE_SEL, slides).length < 2) {
-                return;
-            }
-
-            var currentSlide = $(SLIDE_ACTIVE_SEL, slides)[0];
-            var destiny = null;
-
-            if(direction === 'left'){
-                destiny = prevUntil(currentSlide, SLIDE_SEL);
-            }else{
-                destiny = nextUntil(currentSlide, SLIDE_SEL);
-            }
-
-            //isn't there a next slide in the sequence?
-            if(destiny == null){
-                //respect loopHorizontal settin
-                if (!options.loopHorizontal) return;
-
-                var slideSiblings = siblings(currentSlide);
-                if(direction === 'left'){
-                    destiny = slideSiblings[slideSiblings.length - 1]; //last
-                }else{
-                    destiny = slideSiblings[0]; //first
-                }
-            }
-
-            slideMoving = true && !FP.test.isTesting;
-            landscapeScroll(slides, destiny, direction);
-        }
-        */
 
         /**
         * Maintains the active slides in the viewport
@@ -2486,11 +2443,11 @@
             /*jshint validthis:true */
             if (hasClass(this, SLIDES_PREV)) {
                 if(isScrollAllowed.m.left){
-                    //moveSlideLeft(section);
+                    moveSlideLeft(section);
                 }
             } else {
                 if(isScrollAllowed.m.right){
-                   // moveSlideRight(section);
+                   moveSlideRight(section);
                 }
             }
         }
@@ -2553,17 +2510,14 @@
                 case 38:
                 case 33:
                     if(isScrollAllowed.k.up){
-                       // moveSectionUp();
-                       moveSectionUpHorizontally();
+                       moveUp();
                     }
                     break;
 
                 //down
                 case 32: //spacebar
-
                     if(shiftPressed && isScrollAllowed.k.up && !isMediaFocused){
-                        //moveSectionUp();
-                        moveSectionUpHorizontally();
+                        moveUp();
                         break;
                     }
                 /* falls through */
@@ -2572,8 +2526,7 @@
                     if(isScrollAllowed.k.down){
                         // space bar?
                         if(e.keyCode !== 32 || !isMediaFocused){
-                           // moveSectionDown();
-                           moveSectionDownHorizontally();
+                           moveDown();
                         }
                     }
                     break;
@@ -2594,15 +2547,15 @@
 
                 //left
                 case 37:
-                    if(isScrollAllowed.k.left){
-                       // moveSlideLeft();
+                    if(isScrollAllowed.k.left && !options.scrollHorizontally){
+                       moveSlideLeft();
                     }
                     break;
 
                 //right
                 case 39:
-                    if(isScrollAllowed.k.right){
-                       // moveSlideRight();
+                    if(isScrollAllowed.k.right && !options.scrollHorizontally){
+                        moveSlideRight();
                     }
                     break;
 
@@ -2623,14 +2576,12 @@
             if(canScroll){
                 // moving up
                 if (e.pageY < oldPageY && isScrollAllowed.m.up){
-                    //moveSectionUp();
-                    moveSectionUpHorizontally();
+                    moveUp();
                 }
 
                 // moving down
                 else if(e.pageY > oldPageY && isScrollAllowed.m.down){
-                    //moveSectionDown();
-                    moveSectionDownHorizontally();
+                    moveDown();
                 }
             }
             oldPageY = e.pageY;
