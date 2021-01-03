@@ -530,7 +530,7 @@
         * Optional `section` param.
         */
         function moveSlideRight(section){
-            moveSlideUntil('right', section);
+            return moveSlideUntil('right', section);
         }
 
         /**
@@ -538,7 +538,7 @@
         * Optional `section` param.
         */
         function moveSlideLeft(section){
-             moveSlideUntil('left', section);
+            return moveSlideUntil('left', section);
             
         }
 
