@@ -485,7 +485,7 @@
          * slides down to the first slide of the next section
          */
         function moveSectionDownHorizontally(){
-            if (!moveSlideRight()){
+            if (moveSlideRight() == false){
                 moveSectionDown();
             }
         }
@@ -495,8 +495,8 @@
          * slides all avaliable sections first
          * slides up to the first slide of the next section
          */
-        function moveSectionUpHorizontally(section){
-            if (!moveSlideLeft(section)){
+        function moveSectionUpHorizontally(){
+            if (moveSlideLeft() == false){
                 moveSectionUp();
             }
         }
