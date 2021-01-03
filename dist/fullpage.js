@@ -488,7 +488,8 @@
         * Optional `section` param.
         */
         function moveSlideLeft(section){
-            moveSlide('left', section);
+            // moveSlide('left', section);
+            moveSlideLeftUntilLastThenMoveSection(section);
         }
 
         /**
@@ -1590,6 +1591,34 @@
             }
         }
 
+         /**
+         * Slides a slider to the given direction,
+         * Goes to next section if we reach the left end of the slides
+         */
+        function moveSlideLeftUntilLastThenMoveSection(section){
+            var direction="left";
+            var activeSection = section == null ? $(SECTION_ACTIVE_SEL)[0] : section;
+            var slides = $(SLIDES_WRAPPER_SEL, activeSection)[0];
+
+            // nothing should be already sliding
+            if (slideMoving) {
+                return;
+            }
+
+            var currentSlide = $(SLIDE_ACTIVE_SEL, slides)[0];
+            var destiny = null;
+
+
+            destiny = prevUntil(currentSlide, SLIDE_SEL);
+            if(destiny == null){
+               destiny = moveSectionDown();
+            }
+
+            slideMoving = true && !FP.test.isTesting;
+            landscapeScroll(slides, destiny, direction);
+
+        } 
+        
         /**
         * Slides a slider to the given direction.
         * Optional `section` param.
